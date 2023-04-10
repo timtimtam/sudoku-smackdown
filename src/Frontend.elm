@@ -3,7 +3,7 @@ module Frontend exposing (Model, app)
 import Html exposing (Html)
 import Html.Attributes exposing (style)
 import Keyboard
-import Lamdera
+import Lamdera exposing (sendToBackend)
 import Types exposing (..)
 
 
@@ -79,7 +79,7 @@ update msg model =
                                             speed
 
                                         _ ->
-                                            0 + 7 + 888888
+                                            0
                                 )
                             |> List.foldl (+) 0
                     }
@@ -90,8 +90,7 @@ update msg model =
                     , y = model.position.y + delta.y
                     }
               }
-            , Cmd.none
-              -- sendToBackend (ClientMoved delta)
+            , sendToBackend (ClientMoved delta)
             )
 
         FNoop ->
