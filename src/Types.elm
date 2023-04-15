@@ -1,5 +1,6 @@
 module Types exposing (..)
 
+import Array exposing (Array)
 import Keyboard exposing (Key(..))
 import Lamdera exposing (ClientId, SessionId)
 
@@ -10,24 +11,30 @@ type alias Position =
     }
 
 
+type alias Sudoku =
+    { board : Array (Array (Maybe Int)), size : { x : Int, y : Int } }
+
+
 type alias BackendModel =
-    { position : Position
+    { sudoku : Sudoku
     }
 
 
 type alias FrontendModel =
-    { position : Position
-    , clientId : String
+    { sudoku : Sudoku
     }
 
 
 type FrontendMsg
-    = KeyboardMsg Keyboard.Msg
-    | FNoop
+    = FNoop
 
 
 type ToBackend
-    = ClientMoved Position
+    = InsertNumber
+        { x : Int
+        , y : Int
+        , value : Maybe Int
+        }
 
 
 type BackendMsg
@@ -36,4 +43,4 @@ type BackendMsg
 
 
 type ToFrontend
-    = PositionNewValue Position ClientId
+    = SudokuNewValue Sudoku

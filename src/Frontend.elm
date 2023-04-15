@@ -1,14 +1,12 @@
 module Frontend exposing (Model, app)
 
-import Element exposing (Element, Length, centerX, centerY, column, el, fill, height, none, paddingXY, paragraph, px, rgb255, row, spacing, text, width)
-import Element.Background as Background
+import Array exposing (repeat)
+import Element exposing (centerX, centerY, column, el, height, paddingXY, paragraph, px, row, spacing, text, width)
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input exposing (button)
 import Html exposing (Html)
-import Html.Attributes exposing (style)
-import Keyboard
-import Lamdera exposing (sendToBackend)
+import Lamdera
 import Types exposing (..)
 
 
@@ -32,7 +30,7 @@ app =
                 { title = "v1"
                 , body = [ view model ]
                 }
-        , subscriptions = subscriptions
+        , subscriptions = \_ -> Sub.none
         , onUrlChange = \_ -> FNoop
         , onUrlRequest = \_ -> FNoop
         }
@@ -40,90 +38,18 @@ app =
 
 init : ( Model, Cmd FrontendMsg )
 init =
-    ( { position = { x = 0, y = 0 }, clientId = "" }, Cmd.none )
-
-
-speed : number
-speed =
-    20
+    ( { sudoku =
+            { board = repeat 9 (repeat 9 Nothing)
+            , size = { x = 3, y = 3 }
+            }
+      }
+    , Cmd.none
+    )
 
 
 update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
 update msg model =
     case msg of
-        KeyboardMsg keyMsg ->
-            let
-                pressedKeys =
-                    Keyboard.update keyMsg []
-
-                delta =
-                    { x =
-                        pressedKeys
-                            |> List.map
-                                (\k ->
-                                    let
-                                        left =
-                                            -speed
-
-                                        right =
-                                            speed
-                                    in
-                                    case k of
-                                        Keyboard.ArrowLeft ->
-                                            left
-
-                                        Keyboard.Character "a" ->
-                                            left
-
-                                        Keyboard.ArrowRight ->
-                                            right
-
-                                        Keyboard.Character "d" ->
-                                            right
-
-                                        _ ->
-                                            0
-                                )
-                            |> List.foldr (+) 0
-                    , y =
-                        pressedKeys
-                            |> List.map
-                                (\k ->
-                                    let
-                                        up =
-                                            -speed
-
-                                        down =
-                                            speed
-                                    in
-                                    case k of
-                                        Keyboard.ArrowUp ->
-                                            up
-
-                                        Keyboard.Character "w" ->
-                                            up
-
-                                        Keyboard.ArrowDown ->
-                                            down
-
-                                        Keyboard.Character "s" ->
-                                            down
-
-                                        _ ->
-                                            0
-                                )
-                            |> List.foldl (+) 0
-                    }
-            in
-            ( { model
-                | position =
-                    { x = model.position.x + delta.x
-                    , y = model.position.y + delta.y
-                    }
-              }
-            , sendToBackend (ClientMoved delta)
-            )
-
         FNoop ->
             ( model, Cmd.none )
 
@@ -131,13 +57,8 @@ update msg model =
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
     case msg of
-        PositionNewValue position clientId ->
-            ( { model | position = position, clientId = clientId }, Cmd.none )
-
-
-subscriptions : Model -> Sub FrontendMsg
-subscriptions _ =
-    Sub.map KeyboardMsg Keyboard.subscriptions
+        SudokuNewValue sudoku ->
+            ( { model | sudoku = sudoku }, Cmd.none )
 
 
 view : Model -> Html FrontendMsg
@@ -145,7 +66,60 @@ view model =
     Element.layout [] <|
         column [ paddingXY 0 32, spacing 16, centerX ]
             [ paragraph [ Font.center ] [ text "Sudoku Smackdown!" ]
-            , bigColumn
+            , let
+                totalSize =
+                    model.sudoku.size.x * model.sudoku.size.y
+              in
+              column [ Border.width 4 ] <|
+                Array.toList <|
+                    Array.indexedMap
+                        (\i r ->
+                            row [] <|
+                                Array.toList <|
+                                    Array.indexedMap
+                                        (\j c ->
+                                            el
+                                                [ width <| px 30
+                                                , height <| px 30
+                                                , Border.widthEach
+                                                    { top = 0
+                                                    , left = 0
+                                                    , bottom =
+                                                        if i == totalSize - 1 then
+                                                            0
+
+                                                        else if modBy model.sudoku.size.x i == model.sudoku.size.x - 1 then
+                                                            4
+
+                                                        else
+                                                            2
+                                                    , right =
+                                                        if j == totalSize - 1 then
+                                                            0
+
+                                                        else if modBy model.sudoku.size.y j == model.sudoku.size.y - 1 then
+                                                            4
+
+                                                        else
+                                                            2
+                                                    }
+                                                ]
+                                            <|
+                                                button [ centerX, centerY ]
+                                                    { onPress = Nothing
+                                                    , label =
+                                                        text <|
+                                                            case c of
+                                                                Just value ->
+                                                                    String.fromInt value
+
+                                                                Nothing ->
+                                                                    ""
+                                                    }
+                                        )
+                                        r
+                        )
+                        model.sudoku.board
             ]
 
 

@@ -1,5 +1,6 @@
 module Backend exposing (app, init)
 
+import Array exposing (Array, repeat)
 import Lamdera exposing (ClientId, SessionId, broadcast, sendToFrontend)
 import Types exposing (..)
 
@@ -19,7 +20,9 @@ app =
 
 init : ( Model, Cmd BackendMsg )
 init =
-    ( { position = { x = 30, y = 30 } }, Cmd.none )
+    ( { sudoku = { board = repeat 12 <| repeat 12 <| Just 1, size = { x = 3, y = 4 } } }
+    , Cmd.none
+    )
 
 
 update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
@@ -28,11 +31,31 @@ update msg model =
         ClientConnected _ clientId ->
             ( model
             , sendToFrontend clientId <|
-                PositionNewValue model.position clientId
+                SudokuNewValue model.sudoku
             )
 
         Noop ->
             ( model, Cmd.none )
+
+
+setCell : { x : Int, y : Int, value : a } -> Array (Array a) -> Array (Array a)
+setCell { x, y, value } array =
+    Array.set x
+        (let
+            row =
+                Array.get x array
+         in
+         Array.set y
+            value
+            (case row of
+                Just r ->
+                    r
+
+                Nothing ->
+                    Array.empty
+            )
+        )
+        array
 
 
 updateFromFrontend :
@@ -41,14 +64,17 @@ updateFromFrontend :
     -> ToBackend
     -> Model
     -> ( Model, Cmd BackendMsg )
-updateFromFrontend _ clientId msg model =
+updateFromFrontend _ _ msg ({ sudoku } as model) =
     case msg of
-        ClientMoved { x, y } ->
+        InsertNumber insertion ->
             let
-                newPosition =
-                    { x = model.position.x + x, y = model.position.y + y }
+                newBoard =
+                    setCell insertion model.sudoku.board
+
+                newSudoku =
+                    { sudoku | board = newBoard }
             in
-            ( { model | position = newPosition }, broadcast (PositionNewValue newPosition clientId) )
+            ( { model | sudoku = newSudoku }, broadcast (SudokuNewValue newSudoku) )
 
 
 subscriptions : a -> Sub BackendMsg
