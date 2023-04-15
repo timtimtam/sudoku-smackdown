@@ -1,5 +1,10 @@
 module Frontend exposing (Model, app)
 
+import Element exposing (Element, Length, centerX, centerY, column, el, fill, height, none, paddingXY, paragraph, px, rgb255, row, spacing, text, width)
+import Element.Background as Background
+import Element.Border as Border
+import Element.Font as Font
+import Element.Input exposing (button)
 import Html exposing (Html)
 import Html.Attributes exposing (style)
 import Keyboard
@@ -56,12 +61,25 @@ update msg model =
                         pressedKeys
                             |> List.map
                                 (\k ->
-                                    case k of
-                                        Keyboard.ArrowLeft ->
+                                    let
+                                        left =
                                             -speed
 
-                                        Keyboard.ArrowRight ->
+                                        right =
                                             speed
+                                    in
+                                    case k of
+                                        Keyboard.ArrowLeft ->
+                                            left
+
+                                        Keyboard.Character "a" ->
+                                            left
+
+                                        Keyboard.ArrowRight ->
+                                            right
+
+                                        Keyboard.Character "d" ->
+                                            right
 
                                         _ ->
                                             0
@@ -71,12 +89,25 @@ update msg model =
                         pressedKeys
                             |> List.map
                                 (\k ->
-                                    case k of
-                                        Keyboard.ArrowUp ->
+                                    let
+                                        up =
                                             -speed
 
-                                        Keyboard.ArrowDown ->
+                                        down =
                                             speed
+                                    in
+                                    case k of
+                                        Keyboard.ArrowUp ->
+                                            up
+
+                                        Keyboard.Character "w" ->
+                                            up
+
+                                        Keyboard.ArrowDown ->
+                                            down
+
+                                        Keyboard.Character "s" ->
+                                            down
 
                                         _ ->
                                             0
@@ -111,16 +142,117 @@ subscriptions _ =
 
 view : Model -> Html FrontendMsg
 view model =
-    Html.div []
-        [ Html.div
-            [ style "border-radius" "50%"
-            , style "display" "inline-block"
-            , style "position" "absolute"
-            , style "left" (String.fromFloat model.position.x ++ "px")
-            , style "top" (String.fromFloat model.position.y ++ "px")
-            , style "background-color" "red"
-            , style "width" "20px"
-            , style "height" "20px"
+    Element.layout [] <|
+        column [ paddingXY 0 32, spacing 16, centerX ]
+            [ paragraph [ Font.center ] [ text "Sudoku Smackdown!" ]
+            , bigColumn
             ]
-            []
+
+
+cell =
+    el
+        [ width <| px 30
+        , height <| px 30
+        ]
+    <|
+        button [ centerX, centerY ]
+            { onPress = Nothing
+            , label = text "1"
+            }
+
+
+smallRow =
+    row
+        []
+        [ el
+            [ Border.widthEach
+                { bottom = 0
+                , top = 0
+                , left = 0
+                , right = 2
+                }
+            ]
+            cell
+        , el
+            [ Border.widthEach
+                { bottom = 0
+                , top = 0
+                , left = 0
+                , right = 2
+                }
+            ]
+            cell
+        , cell
+        ]
+
+
+bigCell =
+    column []
+        [ el
+            [ Border.widthEach
+                { bottom = 2
+                , top = 0
+                , left = 0
+                , right = 0
+                }
+            ]
+            smallRow
+        , el
+            [ Border.widthEach
+                { bottom = 2
+                , top = 0
+                , left = 0
+                , right = 0
+                }
+            ]
+            smallRow
+        , smallRow
+        ]
+
+
+bigRow =
+    row []
+        [ el
+            [ Border.widthEach
+                { bottom = 0
+                , top = 0
+                , left = 0
+                , right = 4
+                }
+            ]
+            bigCell
+        , el
+            [ Border.widthEach
+                { bottom = 0
+                , top = 0
+                , left = 0
+                , right = 4
+                }
+            ]
+            bigCell
+        , bigCell
+        ]
+
+
+bigColumn =
+    column [ Border.width 4 ]
+        [ el
+            [ Border.widthEach
+                { bottom = 4
+                , top = 0
+                , left = 0
+                , right = 0
+                }
+            ]
+            bigRow
+        , el
+            [ Border.widthEach
+                { bottom = 4
+                , top = 0
+                , left = 0
+                , right = 0
+                }
+            ]
+            bigRow
+        , bigRow
         ]
