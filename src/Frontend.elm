@@ -60,6 +60,9 @@ updateFromBackend msg model =
         SudokuNewValue sudoku ->
             ( { model | sudoku = sudoku }, Cmd.none )
 
+        TFNoop ->
+            ( model, Cmd.none )
+
 
 view : Model -> Html FrontendMsg
 view model =

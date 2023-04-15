@@ -35,6 +35,7 @@ type ToBackend
         , y : Int
         , value : Maybe Int
         }
+    | TBNoop
 
 
 type BackendMsg
@@ -44,3 +45,4 @@ type BackendMsg
 
 type ToFrontend
     = SudokuNewValue Sudoku
+    | TFNoop

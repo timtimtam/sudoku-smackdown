@@ -76,6 +76,9 @@ updateFromFrontend _ _ msg ({ sudoku } as model) =
             in
             ( { model | sudoku = newSudoku }, broadcast (SudokuNewValue newSudoku) )
 
+        TBNoop ->
+            ( model, Cmd.none )
+
 
 subscriptions : a -> Sub BackendMsg
 subscriptions _ =
